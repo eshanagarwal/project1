@@ -150,11 +150,7 @@ def add():
 def login():
     return render_template('login.html')
 
-@app.route('/login_submit', methods=['POST'])
-def login_submit():
-  email = request.form['email']
-  password = request.form['password']
-  
+def login_validate(email, password):
   query = '''
     SELECT uid, password
     FROM studentuser
@@ -169,6 +165,13 @@ def login_submit():
       uid = result['uid']
 
   cursor.close()
+
+  return uid
+
+@app.route('/login_submit', methods=['POST'])
+def login_submit():
+
+  uid = login_validate(request.form['email'], request.form['password'])
 
   if uid == -1:
     return render_template('login.html')
@@ -186,21 +189,8 @@ def register_submit():
       INSERT INTO studentuser(email, password) VALUES (:email, :password);
     '''
     g.conn.execute(text(query), email = email, password = password);
-  
-  query = '''
-    SELECT uid, password
-    FROM studentuser
-    WHERE email = '{}' AND password = '{}';
-  '''.format(email, password)
-  
-  cursor = g.conn.execute(query)
 
-  uid = -1
-  for result in cursor:
-    if result['password'] == password:
-      uid = result['uid']
-
-  cursor.close()
+  uid = login_validate(email, password)
 
   if uid == -1:
     return render_template('login.html')
