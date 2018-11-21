@@ -157,7 +157,7 @@ def home_get_invites_data(uid):
   sent_invites = []
   for result in cursor:
     sent_invites.append((result["sendee"], result["email"], result["timestamp"]))
-    
+
 
   query = '''
     SELECT invitation.sender as sender, invitation.timestamp as timestamp, studentuser.email as email
@@ -244,7 +244,33 @@ def register_submit():
 def send_invite():
   friend = request.form['invite']
   uid = request.form['uid']
-  print(uid, friend)
+  
+  query = '''
+    SELECT sender, sendee 
+    FROM invitation
+    WHERE sender = :uid
+  '''
+  cursor = g.conn.execute(text(query), uid = uid)
+
+  invite_pair_present = False
+  for result in cursor:
+    if result['sendee'] == int(friend):
+      invite_pair_present = True
+
+  print(invite_pair_present)
+  if invite_pair_present == True:
+    query = '''
+      UPDATE invitation
+      SET timestamp = CURRENT_DATE
+      WHERE sender = :uid AND sendee = :friend;
+    '''
+  else:
+    query = '''
+      INSERT INTO invitation(sender, sendee, timestamp) VALUES (:uid, :friend, CURRENT_DATE);
+    '''
+  
+  g.conn.execute(text(query), uid = uid, friend = friend); 
+
   return home(uid)
 
 
