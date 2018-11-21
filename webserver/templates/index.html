@@ -9,10 +9,10 @@
 
 <body>
   <h1>Morningside Heights Restaurant Recommendation Generator</h1>
-  
+
   <div>
     <h3>Local Feed</h3>
-    {% for uid, rid, timestamp, email, restaurant_name in data %}
+    {% for uid, rid, timestamp, email, restaurant_name in feed_data %}
     <div>
       <p>
         {{email}} visited {{restaurant_name}} on {{timestamp}}.
@@ -21,7 +21,37 @@
     {% endfor %}
   </div>
 
-<p><a href="/another">Go to the other page</a></p>
+  </div>
+    <h3>Your friends</h3>
+    {% for friend, email in friend_data %}
+    <div>
+      <form action="/send_invite" method="POST">
+          {{email}}
+          <input type="hidden" name="uid" value="{{uid}}"/>
+          <button type="submit" name="invite" value="{{friend}}">Invite</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+
+  </div>
+    <h3>Pending Invitations</h3>
+    {% for id, email, timestamp in sent_invites %}
+    <div>
+      <p>
+        You invited {{email}} on {{timestamp}}
+      </p>
+    </div>
+    {% endfor %}
+
+    {% for id, email, timestamp in received_invites %}
+    <div>
+      <p>
+        {{email}} invited you on {{timestamp}}
+      </p>
+    </div>
+    {% endfor %}
+  </div>
 
 </body>
 

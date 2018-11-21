@@ -126,20 +126,68 @@ def home(uid):
   
   cursor = g.conn.execute(query)
 
-  data = []
+  feed_data = []
   for result in cursor:
-    data.append((result['uid'], result['rid'], result['timestamp'], result['email'], result['restaurant_name']))
+    feed_data.append((result['uid'], result['rid'], result['timestamp'], result['email'], result['restaurant_name']))
 
   cursor.close()
-  context = dict(data = data)
 
+  friend_data = home_get_friends_data(uid)
+  sent_invites, received_invites = home_get_invites_data(uid)
+  
+  context = dict(
+    uid = uid, 
+    feed_data = feed_data, 
+    friend_data = friend_data, 
+    sent_invites = sent_invites, 
+    received_invites = received_invites
+  )
 
-  #
-  # render_template looks in the templates/ folder for files.
-  # for example, the below file reads template/index.html
-  #
   return render_template("index.html", **context)
 
+def home_get_invites_data(uid):
+  query = '''
+    SELECT invitation.sendee as sendee, invitation.timestamp as timestamp, studentuser.email as email
+    FROM invitation
+    INNER JOIN studentuser ON invitation.sendee = studentuser.uid
+    WHERE invitation.sender = :uid
+  '''
+  cursor = g.conn.execute(text(query), uid = uid);
+
+  sent_invites = []
+  for result in cursor:
+    sent_invites.append((result["sendee"], result["email"], result["timestamp"]))
+    
+
+  query = '''
+    SELECT invitation.sender as sender, invitation.timestamp as timestamp, studentuser.email as email
+    FROM invitation
+    INNER JOIN studentuser ON invitation.sender = studentuser.uid
+    WHERE invitation.sendee = :uid
+  '''
+  cursor = g.conn.execute(text(query), uid = uid);
+
+  received_invites = []
+  for result in cursor:
+    received_invites.append((result["sender"], result["email"], result["timestamp"], ))
+
+
+  return sent_invites, received_invites
+
+def home_get_friends_data(uid):
+  query = '''
+    SELECT friends.friendee as friendee, studentuser.email as email
+    FROM friends
+    INNER JOIN studentuser ON friends.friendee = studentuser.uid
+    WHERE friends.friender = :uid
+  '''
+  cursor = g.conn.execute(text(query), uid = uid);
+
+  friend_data = []
+  for result in cursor:
+    friend_data.append((result["friendee"], result["email"]))
+
+  return friend_data
 
 @app.route('/login')
 def login():
@@ -191,6 +239,14 @@ def register_submit():
     return render_template('login.html')
 
   return home(uid)
+
+@app.route('/send_invite', methods=['POST'])
+def send_invite():
+  friend = request.form['invite']
+  uid = request.form['uid']
+  print(uid, friend)
+  return home(uid)
+
 
 if __name__ == "__main__":
   import click
