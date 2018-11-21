@@ -36,8 +36,8 @@ app = Flask(__name__, template_folder=tmpl_dir)
 # For your convenience, we already set it to the class database
 
 # Use the DB credentials you received by e-mail
-DB_USER = "YOUR_DB_USERNAME_HERE"
-DB_PASSWORD = "YOUR_DB_PASSWORD_HERE"
+DB_USER = "ea2711"
+DB_PASSWORD = "d73mng0a"
 
 DB_SERVER = "w4111.cisxo09blonu.us-east-1.rds.amazonaws.com"
 
@@ -48,15 +48,6 @@ DATABASEURI = "postgresql://"+DB_USER+":"+DB_PASSWORD+"@"+DB_SERVER+"/w4111"
 # This line creates a database engine that knows how to connect to the URI above
 #
 engine = create_engine(DATABASEURI)
-
-
-# Here we create a test table and insert some values in it
-engine.execute("""DROP TABLE IF EXISTS test;""")
-engine.execute("""CREATE TABLE IF NOT EXISTS test (
-  id serial,
-  name text
-);""")
-engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
 
 
 
@@ -102,7 +93,7 @@ def teardown_request(exception):
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
 #
 @app.route('/')
-def index():
+def index(uid):
   """
   request is a special object that Flask provides to access web request information:
 
@@ -113,46 +104,29 @@ def index():
   See its API: http://flask.pocoo.org/docs/0.10/api/#incoming-request-data
   """
 
-  # DEBUG: this is debugging code to see what request looks like
   print request.args
 
+  query = '''
+    SELECT 
+      visitationlog.uid as uid, 
+      visitationlog.rid as rid, 
+      visitationlog.timestamp as timestamp, 
+      studentuser.email as email, 
+      restaurant.name as restaurant_name
+    FROM visitationlog 
+    INNER JOIN studentuser ON visitationlog.uid = studentuser.uid
+    INNER JOIN restaurant ON visitationlog.rid = restaurant.rid
+    WHERE studentuser.uid = '{}';
+  '''.format(uid)
+  
+  cursor = g.conn.execute(query)
 
-  #
-  # example of a database query
-  #
-  cursor = g.conn.execute("SELECT name FROM test")
-  names = []
+  data = []
   for result in cursor:
-    names.append(result['name'])  # can also be accessed using result[0]
-  cursor.close()
+    data.append((result['uid'], result['rid'], result['timestamp'], result['email'], result['restaurant_name']))
 
-  #
-  # Flask uses Jinja templates, which is an extension to HTML where you can
-  # pass data to a template and dynamically generate HTML based on the data
-  # (you can think of it as simple PHP)
-  # documentation: https://realpython.com/blog/python/primer-on-jinja-templating/
-  #
-  # You can see an example template in templates/index.html
-  #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be 
-  # accessible as a variable in index.html:
-  #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #     
-  #     # creates a <div> tag for each element in data
-  #     # will print: 
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
-  context = dict(data = names)
+  cursor.close()
+  context = dict(data = data)
 
 
   #
@@ -160,18 +134,6 @@ def index():
   # for example, the below file reads template/index.html
   #
   return render_template("index.html", **context)
-
-#
-# This is an example of a different path.  You can see it at
-# 
-#     localhost:8111/another
-#
-# notice that the functio name is another() rather than index()
-# the functions for each app.route needs to have different names
-#
-@app.route('/another')
-def another():
-  return render_template("anotherfile.html")
 
 
 # Example of adding new data to the database
@@ -186,9 +148,64 @@ def add():
 
 @app.route('/login')
 def login():
-    abort(401)
-    this_is_never_executed()
+    return render_template('login.html')
 
+@app.route('/login_submit', methods=['POST'])
+def login_submit():
+  email = request.form['email']
+  password = request.form['password']
+  
+  query = '''
+    SELECT uid, password
+    FROM studentuser
+    WHERE email = '{}';
+  '''.format(email)
+  
+  cursor = g.conn.execute(query)
+
+  uid = -1
+  for result in cursor:
+    if result['password'] == password:
+      uid = result['uid']
+
+  cursor.close()
+
+  if uid == -1:
+    return render_template('login.html')
+
+  return index(uid)
+
+@app.route('/register_submit', methods=['POST'])
+def register_submit():
+  email = request.form['email_register']
+  password = request.form['password_register']
+  password_confirm = request.form['password_confirm']
+
+  if password == password_confirm:
+    query = '''
+      INSERT INTO studentuser(email, password) VALUES (:email, :password);
+    '''
+    g.conn.execute(text(query), email = email, password = password);
+  
+  query = '''
+    SELECT uid, password
+    FROM studentuser
+    WHERE email = '{}' AND password = '{}';
+  '''.format(email, password)
+  
+  cursor = g.conn.execute(query)
+
+  uid = -1
+  for result in cursor:
+    if result['password'] == password:
+      uid = result['uid']
+
+  cursor.close()
+
+  if uid == -1:
+    return render_template('login.html')
+
+  return index(uid)
 
 if __name__ == "__main__":
   import click
