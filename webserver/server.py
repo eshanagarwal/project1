@@ -93,7 +93,12 @@ def teardown_request(exception):
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
 #
 @app.route('/')
-def index(uid):
+def index():
+  return redirect('/login')
+
+
+@app.route('/home')
+def home(uid):
   """
   request is a special object that Flask provides to access web request information:
 
@@ -136,16 +141,6 @@ def index(uid):
   return render_template("index.html", **context)
 
 
-# Example of adding new data to the database
-@app.route('/add', methods=['POST'])
-def add():
-  name = request.form['name']
-  print name
-  cmd = 'INSERT INTO test(name) VALUES (:name1), (:name2)';
-  g.conn.execute(text(cmd), name1 = name, name2 = name);
-  return redirect('/')
-
-
 @app.route('/login')
 def login():
     return render_template('login.html')
@@ -176,7 +171,7 @@ def login_submit():
   if uid == -1:
     return render_template('login.html')
 
-  return index(uid)
+  return home(uid)
 
 @app.route('/register_submit', methods=['POST'])
 def register_submit():
@@ -195,7 +190,7 @@ def register_submit():
   if uid == -1:
     return render_template('login.html')
 
-  return index(uid)
+  return home(uid)
 
 if __name__ == "__main__":
   import click
