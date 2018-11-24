@@ -273,6 +273,10 @@ def send_invite():
 
   return home(uid)
 
+@app.route('/recommendation')
+def recommendation():
+  return render_template("recommendation.html")
+
 
 if __name__ == "__main__":
   import click
