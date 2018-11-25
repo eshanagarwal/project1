@@ -12,6 +12,9 @@
   <p><a href="/recommendation">Get a recommendation</a></p>
   <div>
     <h3>Local Feed</h3>
+    {% if feed_data|length == 0 %}
+      <p> Nothing to show right now! Check back later. </p>
+    {% endif %}
     {% for uid, rid, timestamp, email, restaurant_name in feed_data %}
     <div>
       <p>
@@ -23,6 +26,9 @@
 
   </div>
     <h3>Your friends</h3>
+    {% if friend_data|length == 0 %}
+      <p> Sorry you don't have any friends :( Add some below!</p>
+    {% endif %}
     {% for friend, email in friend_data %}
     <div>
       <form action="/send_invite" method="POST">
@@ -44,6 +50,9 @@
 
   </div>
     <h3>Pending Invitations</h3>
+    {% if sent_invites|length == 0 and received_invites|length == 0 %}
+      <p> Sorry you don't have any invites :( </p>
+    {% endif %}
     {% for id, email, timestamp in sent_invites %}
     <div>
       <p>

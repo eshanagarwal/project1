@@ -111,6 +111,21 @@ def home(uid):
 
   print request.args
 
+  feed_data = home_get_local_feed(uid)
+  friend_data = home_get_friends_data(uid)
+  sent_invites, received_invites = home_get_invites_data(uid)
+  
+  context = dict(
+    uid = uid, 
+    feed_data = feed_data, 
+    friend_data = friend_data, 
+    sent_invites = sent_invites, 
+    received_invites = received_invites
+  )
+
+  return render_template("index.html", **context)
+
+def home_get_local_feed(uid):
   query = '''
     SELECT 
       visitationlog.uid as uid, 
@@ -131,19 +146,7 @@ def home(uid):
     feed_data.append((result['uid'], result['rid'], result['timestamp'], result['email'], result['restaurant_name']))
 
   cursor.close()
-
-  friend_data = home_get_friends_data(uid)
-  sent_invites, received_invites = home_get_invites_data(uid)
-  
-  context = dict(
-    uid = uid, 
-    feed_data = feed_data, 
-    friend_data = friend_data, 
-    sent_invites = sent_invites, 
-    received_invites = received_invites
-  )
-
-  return render_template("index.html", **context)
+  return feed_data
 
 def home_get_invites_data(uid):
   query = '''
