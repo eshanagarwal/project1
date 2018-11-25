@@ -32,6 +32,14 @@
       </form>
     </div>
     {% endfor %}
+
+    <form method="POST" action="/add_friend">
+      <p>
+        Add Friend: <input type="text" name="friend_email" placeholder="email">
+        <input type="hidden" name="uid" value="{{uid}}"/>
+        <input type="submit" value="Add">
+      </p>
+    </form>
   </div>
 
   </div>

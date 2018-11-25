@@ -257,7 +257,6 @@ def send_invite():
     if result['sendee'] == int(friend):
       invite_pair_present = True
 
-  print(invite_pair_present)
   if invite_pair_present == True:
     query = '''
       UPDATE invitation
@@ -270,6 +269,58 @@ def send_invite():
     '''
   
   g.conn.execute(text(query), uid = uid, friend = friend); 
+
+  return home(uid)
+
+@app.route('/add_friend', methods=['POST'])
+def add_friend():
+  uid = request.form['uid']
+  friend_email = request.form['friend_email']
+
+  query = '''
+    SELECT email, uid
+    FROM studentuser
+    WHERE email = :friend_email
+  '''
+
+  cursor = g.conn.execute(text(query), friend_email = friend_email)
+
+  friend_uid = -1
+  print(cursor.rowcount)
+  if cursor.rowcount == 0:
+    # user does not exist
+    print("user does not exist")
+    return home(uid)
+  else:
+    for result in cursor:
+      if result['email'] == friend_email:
+        friend_uid = result['uid']
+
+  if friend_uid == -1:
+    return home(uid)
+  if friend_uid == uid:
+    return home(uid)
+
+  query = '''
+    SELECT friender, friendee, studentuser.email as email
+    FROM friends
+    INNER JOIN studentuser ON friends.friendee = studentuser.uid
+    WHERE friends.friender = :uid
+  '''
+  cursor = g.conn.execute(text(query), uid = uid)
+
+  for result in cursor:
+    if result['email'] == friend_email:
+      # friend pair already exists
+      return home(uid)
+
+  query = '''
+    INSERT INTO friends(friender, friendee) VALUES 
+      (:uid, :friend_uid),
+      (:friend_uid, :uid)
+  '''
+  
+  g.conn.execute(text(query), uid = uid, friend_uid = friend_uid); 
 
   return home(uid)
 
