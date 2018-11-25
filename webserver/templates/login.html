@@ -3,31 +3,78 @@
     body{ 
       font-size: 15pt;
       font-family: arial;
+      background-color: #3498db;
+    }
+    input {
+      width: 250;
+    }
+    .nav_bar {
+      width: 100%; 
+      width: 100vw;
+      background-color: white; 
+      float: left; 
+      margin-left: -10px;
+      margin-top: -10px;
+      text-align: center;
+    }
+    .login_div {
+      width: 400px;
+      text-align:center; 
+      border: 1px solid white;
+      display: inline-block;
+      margin-top: 20px;
+      background-color: white;
+      border-radius: 5px;
+    }
+    .submit_button {
+      width: 100px;
+      height: 30px;
+      border-radius: 10px;
+      background-color: #3498db;
+      border-color: #3498db;
+      color:white;
+      margin-top: 15px;
+    }
+    .submit_button:hover{
+      color:#000000;
+      background-color:#FFFFFF;
     }
   </style>
 
 
 <body>
-<h1>Login/Register to Morningside Heights Restaurant Recommendations Generator</h1>
-  
-<h4>Login</h2>
-<form method="POST" action="/login_submit">
-<p>
-  Email: <input type="text" name="email"> <br />
-  Password: <input type="password" name="password"> <br />
-  <input type="submit" value="Sign in">
-</p>
-</form>
 
-<h4>Register</h2>
-<form method="POST" action="/register_submit">
-<p>
-  Email: <input type="text" name="email_register"> <br />
-  Password: <input type="password" name="password_register"> <br />
-  Confirm Password: <input type="password" name="password_confirm"> <br />
-  <input type="submit" value="Register">
-</p>
-</form>
+<div class="nav_bar">
+  <h2 style="text-align:center; margin-bottom: -20px;">Columbia Meal Social </h2>
+  <h4 style="text-align:center;">Plan Meals with Friends on Campus! </h4>
+</div>
+  
+<div style="text-align:center;">
+  <div class="login_div">
+  <h4 style="margin-bottom: -20px;">Login</h4>
+    <form method="POST" action="/login_submit">
+    <p>
+      <input type="text" name="email" placeholder="Email"> <br />
+      <input type="password" name="password" placeholder="Password"> <br />
+      <input class="submit_button" type="submit" value="Sign in">
+    </p>
+    </form>
+  </div>
+</div>
+
+<div style="text-align:center; align-content:left;">
+  <div class="login_div">
+    <h4 style="margin-bottom: -20px;">Register</h4>
+    <form method="POST" action="/register_submit">
+    <p>
+      <input type="text" name="email_register" placeholder="Email"> <br />
+      <input type="password" name="password_register" placeholder="Password"> <br />
+      <input type="password" name="password_confirm" placeholder="Confirm Password"> <br />
+      <input class="submit_button" type="submit" value="Register">
+    </p>
+    </form>
+  </div>
+</div>
 
 </body>
 
