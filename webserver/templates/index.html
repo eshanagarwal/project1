@@ -3,73 +3,97 @@
     body{ 
       font-size: 15pt;
       font-family: arial;
+      background-color: #3498db;
+    }
+    .panels {
+      display: inline-block;
+      width: 350px;
+      margin-right: 10px;
+      vertical-align: top;
+      background-color: white;
+      border-radius: 5px;
+      padding: 15px;
+    }
+    .nav_bar {
+      width: 100%; 
+      width: 100vw;
+      background-color: white; 
+      float: left; 
+      margin-left: -10px;
+      margin-top: -10px;
+      text-align: center;
     }
   </style>
 
 
 <body>
-  <h1>Morningside Heights Restaurant Recommendation Generator</h1>
+  <div class="nav_bar">
+    <h2 style="text-align:center; margin-bottom: -20px;">Columbia Meal Social </h2>
+    <h4 style="text-align:center;">Plan Meals with Friends on Campus! </h4>
+  </div>
   <p><a href="/recommendation">Get a recommendation</a></p>
-  <div>
-    <h3>Local Feed</h3>
-    {% if feed_data|length == 0 %}
-      <p> Nothing to show right now! Check back later. </p>
-    {% endif %}
-    {% for uid, rid, timestamp, email, restaurant_name in feed_data %}
-    <div>
-      <p>
-        {{email}} visited {{restaurant_name}} on {{timestamp}}.
-      </p>
-    </div>
-    {% endfor %}
-  </div>
 
-  </div>
-    <h3>Your friends</h3>
-    {% if friend_data|length == 0 %}
-      <p> Sorry you don't have any friends :( Add some below!</p>
-    {% endif %}
-    {% for friend, email in friend_data %}
-    <div>
-      <form action="/send_invite" method="POST">
-          {{email}}
+  <div style="text-align:center; align-content:center;">
+    <div class="panels">
+      <h3>Your friends</h3>
+      {% if friend_data|length == 0 %}
+        <p> Sorry you don't have any friends :( Add some below!</p>
+      {% endif %}
+      {% for friend, email in friend_data %}
+      <div>
+        <form action="/send_invite" method="POST">
+            {{email}}
+            <input type="hidden" name="uid" value="{{uid}}"/>
+            <button type="submit" name="invite" value="{{friend}}">Invite</button>
+        </form>
+      </div>
+      {% endfor %}
+
+      <form method="POST" action="/add_friend">
+        <p>
+          Add Friend: <input type="text" name="friend_email" placeholder="email">
           <input type="hidden" name="uid" value="{{uid}}"/>
-          <button type="submit" name="invite" value="{{friend}}">Invite</button>
+          <input type="submit" value="Add">
+        </p>
       </form>
     </div>
-    {% endfor %}
 
-    <form method="POST" action="/add_friend">
-      <p>
-        Add Friend: <input type="text" name="friend_email" placeholder="email">
-        <input type="hidden" name="uid" value="{{uid}}"/>
-        <input type="submit" value="Add">
-      </p>
-    </form>
-  </div>
-
-  </div>
-    <h3>Pending Invitations</h3>
-    {% if sent_invites|length == 0 and received_invites|length == 0 %}
-      <p> Sorry you don't have any invites :( </p>
-    {% endif %}
-    {% for id, email, timestamp in sent_invites %}
-    <div>
-      <p>
-        You invited {{email}} on {{timestamp}}
-      </p>
+    <div class="panels">
+      <h3>Local Feed</h3>
+      {% if feed_data|length == 0 %}
+        <p> Nothing to show right now! Check back later. </p>
+      {% endif %}
+      {% for uid, rid, timestamp, email, restaurant_name in feed_data %}
+      <div>
+        <p>
+          {{email}} visited {{restaurant_name}} on {{timestamp}}.
+        </p>
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
 
-    {% for id, email, timestamp in received_invites %}
-    <div>
-      <p>
-        {{email}} invited you on {{timestamp}}
-      </p>
+    <div class="panels">
+      <h3>Pending Invitations</h3>
+      {% if sent_invites|length == 0 and received_invites|length == 0 %}
+        <p> Sorry you don't have any invites :( </p>
+      {% endif %}
+      {% for id, email, timestamp in sent_invites %}
+      <div>
+        <p>
+          You invited {{email}} on {{timestamp}}
+        </p>
+      </div>
+      {% endfor %}
+
+      {% for id, email, timestamp in received_invites %}
+      <div>
+        <p>
+          {{email}} invited you on {{timestamp}}
+        </p>
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
-
+  <div>
 </body>
 
 
