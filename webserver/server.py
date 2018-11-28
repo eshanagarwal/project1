@@ -3,14 +3,9 @@
 """
 Columbia W4111 Intro to databases
 Example webserver
-
 To run locally
-
     python server.py
-
 Go to http://localhost:8111 in your browser
-
-
 A debugger such as "pdb" may be helpful for debugging.
 Read about it online.
 """
@@ -23,9 +18,7 @@ from flask import Flask, request, render_template, g, redirect, Response
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
-
-
-# XXX: The Database URI should be in the format of: 
+# XXX: The Database URI should be in the format of:
 #
 #     postgresql://USER:PASSWORD@<IP_OF_POSTGRE_SQL_SERVER>/<DB_NAME>
 #
@@ -41,8 +34,7 @@ DB_PASSWORD = "d73mng0a"
 
 DB_SERVER = "w4111.cisxo09blonu.us-east-1.rds.amazonaws.com"
 
-DATABASEURI = "postgresql://"+DB_USER+":"+DB_PASSWORD+"@"+DB_SERVER+"/w4111"
-
+DATABASEURI = "postgresql://" + DB_USER + ":" + DB_PASSWORD + "@" + DB_SERVER + "/w4111"
 
 #
 # This line creates a database engine that knows how to connect to the URI above
@@ -50,33 +42,34 @@ DATABASEURI = "postgresql://"+DB_USER+":"+DB_PASSWORD+"@"+DB_SERVER+"/w4111"
 engine = create_engine(DATABASEURI)
 
 
-
 @app.before_request
 def before_request():
-  """
-  This function is run at the beginning of every web request 
-  (every time you enter an address in the web browser).
-  We use it to setup a database connection that can be used throughout the request
+    """
+    This function is run at the beginning of every web request
+    (every time you enter an address in the web browser).
+    We use it to setup a database connection that can be used throughout the request
+    The variable g is globally accessible
+    """
+    try:
+        g.conn = engine.connect()
+    except:
+        print
+        "uh oh, problem connecting to database"
+        import traceback;
+        traceback.print_exc()
+        g.conn = None
 
-  The variable g is globally accessible
-  """
-  try:
-    g.conn = engine.connect()
-  except:
-    print "uh oh, problem connecting to database"
-    import traceback; traceback.print_exc()
-    g.conn = None
 
 @app.teardown_request
 def teardown_request(exception):
-  """
-  At the end of the web request, this makes sure to close the database connection.
-  If you don't the database could run out of memory!
-  """
-  try:
-    g.conn.close()
-  except Exception as e:
-    pass
+    """
+    At the end of the web request, this makes sure to close the database connection.
+    If you don't the database could run out of memory!
+    """
+    try:
+        g.conn.close()
+    except Exception as e:
+        pass
 
 
 #
@@ -88,45 +81,45 @@ def teardown_request(exception):
 #       @app.route("/foobar/", methods=["POST", "GET"])
 #
 # PROTIP: (the trailing / in the path is important)
-# 
+#
 # see for routing: http://flask.pocoo.org/docs/0.10/quickstart/#routing
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
 #
 @app.route('/')
 def index():
-  return redirect('/login')
+    return redirect('/login')
 
 
 @app.route('/home')
 def home(uid):
-  """
-  request is a special object that Flask provides to access web request information:
+    """
+    request is a special object that Flask provides to access web request information:
+    request.method:   "GET" or "POST"
+    request.form:     if the browser submitted a form, this contains the data in the form
+    request.args:     dictionary of URL arguments e.g., {a:1, b:2} for http://localhost?a=1&b=2
+    See its API: http://flask.pocoo.org/docs/0.10/api/#incoming-request-data
+    """
 
-  request.method:   "GET" or "POST"
-  request.form:     if the browser submitted a form, this contains the data in the form
-  request.args:     dictionary of URL arguments e.g., {a:1, b:2} for http://localhost?a=1&b=2
+    print
+    request.args
 
-  See its API: http://flask.pocoo.org/docs/0.10/api/#incoming-request-data
-  """
+    feed_data = home_get_local_feed(uid)
+    friend_data = home_get_friends_data(uid)
+    sent_invites, received_invites = home_get_invites_data(uid)
 
-  print request.args
+    context = dict(
+        uid=uid,
+        feed_data=feed_data,
+        friend_data=friend_data,
+        sent_invites=sent_invites,
+        received_invites=received_invites
+    )
 
-  feed_data = home_get_local_feed(uid)
-  friend_data = home_get_friends_data(uid)
-  sent_invites, received_invites = home_get_invites_data(uid)
-  
-  context = dict(
-    uid = uid, 
-    feed_data = feed_data, 
-    friend_data = friend_data, 
-    sent_invites = sent_invites, 
-    received_invites = received_invites
-  )
+    return render_template("index.html", **context)
 
-  return render_template("index.html", **context)
 
 def home_get_local_feed(uid):
-  query = '''
+    query = '''
     SELECT 
       visitationlog.uid as uid, 
       visitationlog.rid as rid, 
@@ -138,224 +131,243 @@ def home_get_local_feed(uid):
     INNER JOIN restaurant ON visitationlog.rid = restaurant.rid
     WHERE studentuser.uid = '{}';
   '''.format(uid)
-  
-  cursor = g.conn.execute(query)
 
-  feed_data = []
-  for result in cursor:
-    feed_data.append((result['uid'], result['rid'], result['timestamp'], result['email'], result['restaurant_name']))
+    cursor = g.conn.execute(query)
 
-  cursor.close()
-  return feed_data
+    feed_data = []
+    for result in cursor:
+        feed_data.append(
+            (result['uid'], result['rid'], result['timestamp'], result['email'], result['restaurant_name']))
+
+    cursor.close()
+    return feed_data
+
 
 def home_get_invites_data(uid):
-  query = '''
+    query = '''
     SELECT invitation.sendee as sendee, invitation.timestamp as timestamp, studentuser.email as email
     FROM invitation
     INNER JOIN studentuser ON invitation.sendee = studentuser.uid
     WHERE invitation.sender = :uid
   '''
-  cursor = g.conn.execute(text(query), uid = uid);
+    cursor = g.conn.execute(text(query), uid=uid);
 
-  sent_invites = []
-  for result in cursor:
-    sent_invites.append((result["sendee"], result["email"], result["timestamp"]))
+    sent_invites = []
+    for result in cursor:
+        sent_invites.append((result["sendee"], result["email"], result["timestamp"]))
 
-
-  query = '''
+    query = '''
     SELECT invitation.sender as sender, invitation.timestamp as timestamp, studentuser.email as email
     FROM invitation
     INNER JOIN studentuser ON invitation.sender = studentuser.uid
     WHERE invitation.sendee = :uid
   '''
-  cursor = g.conn.execute(text(query), uid = uid);
+    cursor = g.conn.execute(text(query), uid=uid);
 
-  received_invites = []
-  for result in cursor:
-    received_invites.append((result["sender"], result["email"], result["timestamp"], ))
+    received_invites = []
+    for result in cursor:
+        received_invites.append((result["sender"], result["email"], result["timestamp"],))
 
+    return sent_invites, received_invites
 
-  return sent_invites, received_invites
 
 def home_get_friends_data(uid):
-  query = '''
+    query = '''
     SELECT friends.friendee as friendee, studentuser.email as email
     FROM friends
     INNER JOIN studentuser ON friends.friendee = studentuser.uid
     WHERE friends.friender = :uid
   '''
-  cursor = g.conn.execute(text(query), uid = uid);
+    cursor = g.conn.execute(text(query), uid=uid);
 
-  friend_data = []
-  for result in cursor:
-    friend_data.append((result["friendee"], result["email"]))
+    friend_data = []
+    for result in cursor:
+        friend_data.append((result["friendee"], result["email"]))
 
-  return friend_data
+    return friend_data
+
 
 @app.route('/login')
 def login():
     return render_template('login.html')
 
+
 def login_validate(email, password):
-  query = '''
+    query = '''
     SELECT uid, password
     FROM studentuser
     WHERE email = '{}';
   '''.format(email)
-  
-  cursor = g.conn.execute(query)
 
-  uid = -1
-  for result in cursor:
-    if result['password'] == password:
-      uid = result['uid']
+    cursor = g.conn.execute(query)
 
-  cursor.close()
+    uid = -1
+    for result in cursor:
+        if result['password'] == password:
+            uid = result['uid']
 
-  return uid
+    cursor.close()
+
+    return uid
+
 
 @app.route('/login_submit', methods=['POST'])
 def login_submit():
+    uid = login_validate(request.form['email'], request.form['password'])
 
-  uid = login_validate(request.form['email'], request.form['password'])
+    if uid == -1:
+        return render_template('login.html')
 
-  if uid == -1:
-    return render_template('login.html')
+    return home(uid)
 
-  return home(uid)
 
 @app.route('/register_submit', methods=['POST'])
 def register_submit():
-  email = request.form['email_register']
-  password = request.form['password_register']
-  password_confirm = request.form['password_confirm']
+    email = request.form['email_register']
+    password = request.form['password_register']
+    password_confirm = request.form['password_confirm']
+    dorm_name = request.form['dorm_name']
 
-  if password == password_confirm:
-    query = '''
-      INSERT INTO studentuser(email, password) VALUES (:email, :password);
+    if password == password_confirm:
+        query = '''
+      INSERT INTO studentuser(email, password, dorm_name) VALUES (:email, :password, :dorm_name);
     '''
-    g.conn.execute(text(query), email = email, password = password);
+        g.conn.execute(text(query), email=email, password=password);
 
-  uid = login_validate(email, password)
+    uid = login_validate(email, password)
 
-  if uid == -1:
-    return render_template('login.html')
+    if uid == -1:
+        return render_template('login.html')
 
-  return home(uid)
+    return home(uid)
+
 
 @app.route('/send_invite', methods=['POST'])
 def send_invite():
-  friend = request.form['invite']
-  uid = request.form['uid']
-  
-  query = '''
+    friend = request.form['invite']
+    uid = request.form['uid']
+
+    query = '''
     SELECT sender, sendee 
     FROM invitation
     WHERE sender = :uid
   '''
-  cursor = g.conn.execute(text(query), uid = uid)
+    cursor = g.conn.execute(text(query), uid=uid)
 
-  invite_pair_present = False
-  for result in cursor:
-    if result['sendee'] == int(friend):
-      invite_pair_present = True
+    invite_pair_present = False
+    for result in cursor:
+        if result['sendee'] == int(friend):
+            invite_pair_present = True
 
-  if invite_pair_present == True:
-    query = '''
+    if invite_pair_present == True:
+        query = '''
       UPDATE invitation
       SET timestamp = CURRENT_DATE
       WHERE sender = :uid AND sendee = :friend;
     '''
-  else:
-    query = '''
+    else:
+        query = '''
       INSERT INTO invitation(sender, sendee, timestamp) VALUES (:uid, :friend, CURRENT_DATE);
     '''
-  
-  g.conn.execute(text(query), uid = uid, friend = friend); 
 
-  return home(uid)
+    g.conn.execute(text(query), uid=uid, friend=friend);
+
+    return home(uid)
+
 
 @app.route('/add_friend', methods=['POST'])
 def add_friend():
-  uid = request.form['uid']
-  friend_email = request.form['friend_email']
+    uid = request.form['uid']
+    friend_email = request.form['friend_email']
 
-  query = '''
+    query = '''
     SELECT email, uid
     FROM studentuser
     WHERE email = :friend_email
   '''
 
-  cursor = g.conn.execute(text(query), friend_email = friend_email)
+    cursor = g.conn.execute(text(query), friend_email=friend_email)
 
-  friend_uid = -1
-  print(cursor.rowcount)
-  if cursor.rowcount == 0:
-    # user does not exist
-    print("user does not exist")
-    return home(uid)
-  else:
-    for result in cursor:
-      if result['email'] == friend_email:
-        friend_uid = result['uid']
+    friend_uid = -1
+    print(cursor.rowcount)
+    if cursor.rowcount == 0:
+        # user does not exist
+        print("user does not exist")
+        return home(uid)
+    else:
+        for result in cursor:
+            if result['email'] == friend_email:
+                friend_uid = result['uid']
 
-  if friend_uid == -1:
-    return home(uid)
-  if friend_uid == uid:
-    return home(uid)
+    if friend_uid == -1:
+        return home(uid)
+    if friend_uid == uid:
+        return home(uid)
 
-  query = '''
+    query = '''
     SELECT friender, friendee, studentuser.email as email
     FROM friends
     INNER JOIN studentuser ON friends.friendee = studentuser.uid
     WHERE friends.friender = :uid
   '''
-  cursor = g.conn.execute(text(query), uid = uid)
+    cursor = g.conn.execute(text(query), uid=uid)
 
-  for result in cursor:
-    if result['email'] == friend_email:
-      # friend pair already exists
-      return home(uid)
+    for result in cursor:
+        if result['email'] == friend_email:
+            # friend pair already exists
+            return home(uid)
 
-  query = '''
+    query = '''
     INSERT INTO friends(friender, friendee) VALUES 
       (:uid, :friend_uid),
       (:friend_uid, :uid)
   '''
-  
-  g.conn.execute(text(query), uid = uid, friend_uid = friend_uid); 
 
-  return home(uid)
+    g.conn.execute(text(query), uid=uid, friend_uid=friend_uid);
+
+    return home(uid)
+
 
 @app.route('/recommendation')
 def recommendation():
-  return render_template("recommendation.html")
+    return render_template("recommendation.html")
+
+def recommend():
+    item_style = request.form['item_style']
+    block_distance = request.form['block_distance']
+
+    query = '''
+    SELECT DISTINCT restaurant.name
+    FROM restaurant INNER JOIN RestaurantMenuItemPair on restaurant.rid = RestaurantMenuItemPair.rid
+    INNER JOIN  MenuItem on RestaurantMenuItemPair.item_type = MenuItem.item_type
+    WHERE item_style = :item_style '''
+
+    g.conn.execute(text(query), item_style=item_style, block_distance=block_distance)
+
 
 
 if __name__ == "__main__":
-  import click
-
-  @click.command()
-  @click.option('--debug', is_flag=True)
-  @click.option('--threaded', is_flag=True)
-  @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=8111, type=int)
-  def run(debug, threaded, host, port):
-    """
-    This function handles command line parameters.
-    Run the server using
-
-        python server.py
-
-    Show the help text using
-
-        python server.py --help
-
-    """
-
-    HOST, PORT = host, port
-    print "running on %s:%d" % (HOST, PORT)
-    app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
+    import click
 
 
-  run()
+    @click.command()
+    @click.option('--debug', is_flag=True)
+    @click.option('--threaded', is_flag=True)
+    @click.argument('HOST', default='0.0.0.0')
+    @click.argument('PORT', default=8111, type=int)
+    def run(debug, threaded, host, port):
+        """
+        This function handles command line parameters.
+        Run the server using
+            python server.py
+        Show the help text using
+            python server.py --help
+        """
+
+        HOST, PORT = host, port
+        print
+        "running on %s:%d" % (HOST, PORT)
+        app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
+
+
+    run()
