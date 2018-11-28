@@ -1,6 +1,6 @@
 <html>
   <style>
-    body{ 
+    body{
       font-size: 15pt;
       font-family: arial;
       background-color: #3498db;
@@ -9,17 +9,17 @@
       width: 250;
     }
     .nav_bar {
-      width: 100%; 
+      width: 100%;
       width: 100vw;
-      background-color: white; 
-      float: left; 
+      background-color: white;
+      float: left;
       margin-left: -10px;
       margin-top: -10px;
       text-align: center;
     }
     .login_div {
       width: 400px;
-      text-align:center; 
+      text-align:center;
       border: 1px solid white;
       display: inline-block;
       margin-top: 20px;
@@ -48,7 +48,7 @@
   <h2 style="text-align:center; margin-bottom: -20px;">Columbia Meal Social </h2>
   <h4 style="text-align:center;">Plan Meals with Friends on Campus! </h4>
 </div>
-  
+
 <div style="text-align:center;">
   <div class="login_div">
   <h4 style="margin-bottom: -20px;">Login</h4>
@@ -70,6 +70,19 @@
       <input type="text" name="email_register" placeholder="Email"> <br />
       <input type="password" name="password_register" placeholder="Password"> <br />
       <input type="password" name="password_confirm" placeholder="Confirm Password"> <br />
+      <select name="dorm_name">
+        <option disabled selected value> -- select a dorm -- </option>
+        <option>Carman</option>
+        <option>East Campus</option>
+        <option>Furnald</option>
+        <option>Hartley</option>
+        <option>John Jay</option>
+        <option>McBain</option>
+        <option>Schapiro</option>
+        <option>Wallach</option>
+        <option>Wien</option>
+        <option>Woodbridge</option>
+      </select> <br />
       <input class="submit_button" type="submit" value="Register">
     </p>
     </form>
