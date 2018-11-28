@@ -1,6 +1,6 @@
 <html>
   <style>
-    body{ 
+    body{
       font-size: 15pt;
       font-family: arial;
     }
@@ -13,22 +13,30 @@
   <p>Generate a recommendation, choose one of the following</p>
 
   Cuisine Type:
-  <select>
-    <option value="volvo">Mexican</option>
-    <option value="saab">Sandwhich/Sub</option>
-    <option value="mercedes">Indian</option>
-    <option value="audi">Italian</option>
+  <select name="item_style">
+    <option disabled selected value> -- select an option -- </option>
+    <option value="Healthy">Healthy</option>
+    <option value="Fish">Seafood</option>
+    <option value="American">American</option>
+    <option value="Italian">Italian</option>
   </select>
   <br />
-  
+
   Distance (number of block radius):
-  <select>
-    <option value="volvo">2</option>
-    <option value="saab">4</option>
-    <option value="mercedes">6</option>
-    <option value="audi">8</option>
-    <option value="audi">10</option>
+  <select name="block_distance">
+    <option disabled selected value> -- select an option -- </option>
+    <option value="2">2</option>
+    <option value="4">4</option>
+    <option value="6">6</option>
+    <option value="8">8</option>
+    <option value="10">10</option>
+    <option value="999">Any</option>
   </select>
+  <br />
+  <br />
+
+  Recommended restaurant:
+  <form method="POST" action="/recommend">
 
 </body>
 
