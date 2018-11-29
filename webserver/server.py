@@ -346,10 +346,10 @@ def recommend():
     g.conn.execute(text(query), item_style=item_style, block_distance=block_distance)
 
 @app.route('/restaurants', methods=['GET'])
-def restaurants(rid = -1, location='', menu_details=[], ratings=[], comments = {}):
+def restaurants(uid = -1, rid = -1, location='', menu_details=[], ratings=[], comments = {}):
   if 'uid' in request.args:
     uid = request.args['uid']
-  else: 
+  elif uid < 0:
     return index()
 
   query = '''
@@ -439,17 +439,21 @@ def view_restaurant_details():
 
   return restaurants(rid = rid, location=location, menu_details = menu_details, ratings=ratings, comments = comments)
 
-@app.route('/add_rating')
+@app.route('/add_rating', methods=["POST"])
 def add_rating():
   review_text = request.form["new_review"]
   stars = request.form["stars"]
+  uid = request.form["uid"]
+  rid = request.form["rid"]
+  print(review_text, stars, uid, rid)
 
   query = '''
     INSERT INTO rating(uid, rid, stars, review) VALUES 
       (:uid, :rid, :stars, :review_text)
   '''
+  cursor = g.conn.execute(text(query), rid = rid, uid = uid, stars = stars, review_text = review_text)  
 
-  return 
+  return restaurants(uid = uid)
 
 if __name__ == "__main__":
     import click
