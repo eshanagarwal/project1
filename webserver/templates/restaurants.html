@@ -24,6 +24,16 @@
       margin-top: -10px;
       text-align: center;
     }
+    .rating {
+      float:left;
+      display: block;
+    }
+    .comment {
+      float:left;
+      display:block;
+      width: 100%;
+      margin-left: 15px;
+    }
   </style>
 
 
@@ -57,7 +67,7 @@
       <div class="panels" style="display:block; margin-top: 15px;">
         <form method="POST" action="/add_rating">
           <p>
-            Write a review: <input type="text" name="new_review" placeholder="Review Text"> <br />
+            Write a review: <input type="text" name="new_review" placeholder="blah"> <br />
             Stars: <select name="stars">
               <option value="1">1</option>
               <option value="2">2</option>
@@ -86,13 +96,21 @@
   
 
   {% if ratings|length > 0 %}
-    <div class="panels">
+    <div class="panels" style="text-align:left; height:400px; overflow-y:scroll;">
       <h5> Ratings </h5>
       {% for rating_id, stars, review in ratings %}
-        <p> {{stars}}: {{review}}</p>
+        <p class="rating"> {{stars}}: {{review}}</p> <br />
         {% for comment_body in comments[rating_id|int] %}
-          <p> {{comment_body}} </p>
+          <p class="comment"> {{comment_body}} </p> <br />
         {% endfor %}
+        <div class="comment">
+          <form method="POST" action="/add_comment">
+            <input type="text" name="new_review" placeholder="Write a comment">
+            <input type="hidden" name="rid" value="{{rid}}"/>
+            <input type="hidden" name="uid" value="{{uid}}"/>
+            <input type="submit" value="Publish">
+          </form>
+        </div>
       {% endfor %}
     </div>
   {% endif %}
