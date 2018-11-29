@@ -19,6 +19,10 @@
     <input type="submit" value="Select">
   </form>
 
+  {% if location != '' %}
+    <p> Located: {{location}} </p>
+  {% endif %}
+
   {% if menu_details|length > 0 %}
     <h5> Menu </h5>
     {% for item_type, price in menu_details %}
@@ -36,6 +40,22 @@
     {% endfor %}
   {% endif %}
 
+  {% if rid != -1 %}
+    <form method="POST" action="/add_rating">
+      <p>
+        Write a review: <input type="text" name="new_review" placeholder="Review Text">
+        Stars: <select name="stars">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+        <input type="hidden" name="rid" value="{{rid}}"/>
+        <input type="submit" value="Publish">
+      </p>
+    </form>
+  {% endif %}
 </body>
 
 </html>

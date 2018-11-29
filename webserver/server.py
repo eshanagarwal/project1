@@ -345,7 +345,7 @@ def recommend():
     g.conn.execute(text(query), item_style=item_style, block_distance=block_distance)
 
 @app.route('/restaurants')
-def restaurants(location='', menu_details=[], ratings=[], comments = {}):
+def restaurants(rid = -1, location='', menu_details=[], ratings=[], comments = {}):
   query = '''
     SELECT DISTINCT restaurant.name as name
     FROM restaurant 
@@ -359,6 +359,7 @@ def restaurants(location='', menu_details=[], ratings=[], comments = {}):
   cursor.close()
 
   context = dict(
+    rid = rid,
     restaurants = restaurants,
     location = location,
     menu_details = menu_details,
@@ -429,7 +430,19 @@ def view_restaurant_details():
 
   cursor.close()
 
-  return restaurants(location=location, menu_details = menu_details, ratings=ratings, comments = comments)
+  return restaurants(rid = rid, location=location, menu_details = menu_details, ratings=ratings, comments = comments)
+
+@app.route('/add_rating')
+def add_rating():
+  review_text = request.form["new_review"]
+  stars = request.form["stars"]
+  
+  query = '''
+    INSERT INTO rating(uid, rid, stars, review) VALUES 
+      (:uid, :rid, :stars, :review_text)
+  '''
+
+  return 
 
 if __name__ == "__main__":
     import click
