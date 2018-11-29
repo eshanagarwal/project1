@@ -249,7 +249,7 @@ def register_submit():
         query = '''
       INSERT INTO studentuser(email, password, dorm_name) VALUES (:email, :password, :dorm_name);
     '''
-        g.conn.execute(text(query), email=email, password=password);
+        g.conn.execute(text(query), email=email, password=password, dorm_name = dorm_name);
 
     uid = login_validate(email, password)
 
@@ -364,6 +364,13 @@ def recommend(rid = -1, name = ''):
     block_distance = request.form['block_distance']
     relative_cost = request.form['relative_cost']
 
+    if item_style == '' or block_distance == '' or relative_cost == '':
+      context = dict(
+          uid=uid,
+          recommendations=[]
+      )
+      return render_template("recommendation.html", **context)
+
     query = '''
     SELECT DISTINCT restaurant.name as name, restaurant.rid as rid
     FROM restaurant 
@@ -396,20 +403,24 @@ def recommend(rid = -1, name = ''):
         SELECT 
           visitationlog.uid as uid, 
           visitationlog.rid as rid, 
-          visitationlog.timestamp as timestamp, 
+          visitationlog.timestamp as timestamp
         FROM visitationlog 
         WHERE uid = :uid and rid = :rid and timestamp = CURRENT_DATE
       '''
-      cursor = g.conn.execute(text(query), uid=uid, rid=rid)
+      cursor = g.conn.execute(text(check_query), uid=uid, rid=rid)
+      already_exists = False
       for result in cursor:
-        return
+        already_exists = True
 
-      query = '''
-          INSERT INTO visitationlog(uid, rid, timestamp) VALUES 
-            (:uid, :rid, CURRENT_DATE)
-      '''
-      cursor = g.conn.execute(text(query), uid=uid, rid=rid)
       cursor.close()
+
+      if not already_exists:
+        query = '''
+            INSERT INTO visitationlog(uid, rid, timestamp) VALUES 
+              (:uid, :rid, CURRENT_DATE)
+        '''
+        cursor = g.conn.execute(text(query), uid=uid, rid=rid)
+        cursor.close()
 
     context = dict(
         uid=uid,

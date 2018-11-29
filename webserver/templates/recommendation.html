@@ -61,14 +61,15 @@
     <input type="submit" value="Submit">
   </form>
 
+  {% if recommendations|length == 0 %}
+    <p> No recommendation with given parameters. </p>
+  {% endif %}
+
   {% if recommendations|length > 0 %}
   {% for rid, name in recommendations %}
       <p> Recommended restaurant: {{name}}</p>
   {% endfor %}
   {% endif %}
-
-
-
 
 </body>
 
