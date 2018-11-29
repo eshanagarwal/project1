@@ -28,8 +28,11 @@
 
   {% if ratings|length > 0 %}
     <h5> Ratings </h5>
-    {% for stars, review in ratings %}
+    {% for rating_id, stars, review in ratings %}
       <p> {{stars}}: {{review}}</p>
+      {% for comment_body in comments[rating_id|int] %}
+        <p> {{comment_body}} </p>
+      {% endfor %}
     {% endfor %}
   {% endif %}
 

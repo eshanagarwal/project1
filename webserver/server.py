@@ -345,7 +345,7 @@ def recommend():
     g.conn.execute(text(query), item_style=item_style, block_distance=block_distance)
 
 @app.route('/restaurants')
-def restaurants(location='', menu_details={}, ratings={}):
+def restaurants(location='', menu_details=[], ratings=[], comments = {}):
   query = '''
     SELECT DISTINCT restaurant.name as name
     FROM restaurant 
@@ -362,7 +362,8 @@ def restaurants(location='', menu_details={}, ratings={}):
     restaurants = restaurants,
     location = location,
     menu_details = menu_details,
-    ratings = ratings
+    ratings = ratings,
+    comments = comments
   )
   return render_template("restaurants.html", **context)
 
@@ -399,17 +400,36 @@ def view_restaurant_details():
   cursor.close()
 
   query_reviews = '''
-    SELECT stars, review
+    SELECT *
     FROM rating
     WHERE rid = :rid
   '''
   cursor = g.conn.execute(text(query_reviews), rid = rid)  
   ratings = []
   for result in cursor:
-    ratings.append((result["stars"], result["review"]))
+    ratings.append((result["rating_id"], result["stars"], result["review"]))
   cursor.close()
 
-  return restaurants(location=location, menu_details = menu_details, ratings=ratings)
+  query_comments = '''
+    SELECT *
+    FROM ratingcomment
+    WHERE rating_id IN (
+      SELECT rating_id
+      FROM rating
+      WHERE rid = :rid
+    )
+  '''
+  cursor = g.conn.execute(text(query_comments), rid = rid)  
+  comments = {}
+  for result in cursor:
+    if result['rating_id'] in comments:
+      comments[result['rating_id']].append(result['comment_body'])
+    else:
+      comments[result['rating_id']] = [result['comment_body']]
+
+  cursor.close()
+
+  return restaurants(location=location, menu_details = menu_details, ratings=ratings, comments = comments)
 
 if __name__ == "__main__":
     import click
