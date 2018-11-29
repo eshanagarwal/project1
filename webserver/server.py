@@ -531,12 +531,14 @@ def view_restaurant_details():
     WHERE rid = :rid
   '''
   cursor = g.conn.execute(text(average_rating), rid = rid)  
-  average_rating = 0
+  average_rating = 0.0
   for result in cursor:
-    average_rating = result["avg"]
+    if result["avg"] != None:
+      average_rating = float(result["avg"])
   cursor.close()  
 
-  average_rating = float("%0.2f" % average_rating)
+  if average_rating != 0.0:
+    average_rating = float("%0.2f" % average_rating)
   
   return restaurants(uid = uid, rid = rid, location=location, average_rating = average_rating, menu_details = menu_details, ratings=ratings, comments = comments)
 
