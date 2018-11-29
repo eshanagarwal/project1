@@ -390,25 +390,20 @@ def recommend(rid = -1, name = ''):
 
     cursor.close()
     print(recommendations)
-    query = '''
-      SELECT rid as rid
-      FROM visitationlog
-      WHERE uid = :uid
-      LIMIT 2
-    '''
-
-    cursor = g.conn.execute(text(query), uid=uid)
-    visits = []
-    for result in cursor:
-        visits.append(result['rid'])
-
-    cursor.close()
 
     if len(recommendations) > 0:
       rid = recommendations[0][0]
+
       query = '''
-        INSERT INTO visitationlog(uid, rid, timestamp) VALUES 
-          (:uid, :rid, CURRENT_DATE)
+        IF NOT EXISTS (
+          SELECT uid, rid, timestamp
+          FROM visitationlog
+          WHERE rid = :rid AND uid = :uid AND timestamp = CURRENT_DATE
+        )
+        BEGIN 
+          INSERT INTO visitationlog(uid, rid, timestamp) VALUES 
+            (:uid, :rid, CURRENT_DATE)
+        END;
       '''
       cursor = g.conn.execute(text(query), uid=uid, rid=rid)
       cursor.close()
@@ -420,10 +415,10 @@ def recommend(rid = -1, name = ''):
     return render_template("recommendation.html", **context)
 
 @app.route('/restaurants', methods=['GET'])
-def restaurants(rid = -1, location='', menu_details=[], ratings=[], comments = {}):
+def restaurants(uid = -1, rid = -1, location='', average_rating = 0, menu_details=[], ratings=[], comments = {}):
   if 'uid' in request.args:
     uid = request.args['uid']
-  else:
+  elif uid < 0:
     return index()
 
   query = '''
@@ -443,6 +438,7 @@ def restaurants(rid = -1, location='', menu_details=[], ratings=[], comments = {
     rid = rid,
     restaurants = restaurants,
     location = location,
+    average_rating = average_rating,
     menu_details = menu_details,
     ratings = ratings,
     comments = comments
@@ -452,13 +448,15 @@ def restaurants(rid = -1, location='', menu_details=[], ratings=[], comments = {
 @app.route('/view_restaurant_details', methods=['GET', 'POST'])
 def view_restaurant_details():
   chosen_rest = request.form['chosen_restaurant']
+  uid = request.form["uid"]
+
   query = '''
     SELECT rid, location 
     FROM restaurant 
     WHERE name = :chosen_rest
   '''
 
-  cursor = g.conn.execute(text(query), chosen_rest = chosen_rest)
+  cursor = g.conn.execute(text(query), chosen_rest = chosen_rest)  
   location = ''
   rid = -1
   for result in cursor:
@@ -474,7 +472,7 @@ def view_restaurant_details():
     FROM RestaurantMenuItemPair
     WHERE rid = :rid
   '''
-  cursor = g.conn.execute(text(query_menu), rid = rid)
+  cursor = g.conn.execute(text(query_menu), rid = rid)  
   menu_details = []
   for result in cursor:
     menu_details.append((result["item_type"], result["price"]))
@@ -482,36 +480,52 @@ def view_restaurant_details():
   cursor.close()
 
   query_reviews = '''
-    SELECT *
+    SELECT *, studentuser.email as email
     FROM rating
+    INNER JOIN studentuser ON rating.uid = studentuser.uid
     WHERE rid = :rid
   '''
-  cursor = g.conn.execute(text(query_reviews), rid = rid)
+  cursor = g.conn.execute(text(query_reviews), rid = rid)  
   ratings = []
   for result in cursor:
-    ratings.append((result["rating_id"], result["stars"], result["review"]))
+    ratings.append((result["email"], result["rating_id"], result["stars"], result["review"]))
   cursor.close()
 
   query_comments = '''
-    SELECT *
+    SELECT *, studentuser.email as email
     FROM ratingcomment
+    INNER JOIN studentuser ON ratingcomment.commenter_uid = studentuser.uid
     WHERE rating_id IN (
       SELECT rating_id
       FROM rating
       WHERE rid = :rid
     )
   '''
-  cursor = g.conn.execute(text(query_comments), rid = rid)
+  cursor = g.conn.execute(text(query_comments), rid = rid)  
   comments = {}
   for result in cursor:
     if result['rating_id'] in comments:
-      comments[result['rating_id']].append(result['comment_body'])
+      comments[result['rating_id']].append((result["email"], result['comment_body']))
     else:
-      comments[result['rating_id']] = [result['comment_body']]
+      comments[result['rating_id']] = [(result["email"], result['comment_body'])]
 
   cursor.close()
 
-  return restaurants(rid = rid, location=location, menu_details = menu_details, ratings=ratings, comments = comments)
+  average_rating = '''
+    SELECT AVG(stars) as avg
+    FROM rating
+    WHERE rid = :rid
+  '''
+  cursor = g.conn.execute(text(average_rating), rid = rid)  
+  average_rating = 0
+  for result in cursor:
+    average_rating = result["avg"]
+  cursor.close()  
+
+  average_rating = float("%0.2f" % average_rating)
+  
+  return restaurants(uid = uid, rid = rid, location=location, average_rating = average_rating, menu_details = menu_details, ratings=ratings, comments = comments)
+
 
 @app.route('/add_rating')
 def add_rating():
