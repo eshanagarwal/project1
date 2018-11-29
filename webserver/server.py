@@ -389,21 +389,24 @@ def recommend(rid = -1, name = ''):
         recommendations.append((result['rid'], result['name']))
 
     cursor.close()
-    print(recommendations)
 
     if len(recommendations) > 0:
       rid = recommendations[0][0]
+      check_query = '''
+        SELECT 
+          visitationlog.uid as uid, 
+          visitationlog.rid as rid, 
+          visitationlog.timestamp as timestamp, 
+        FROM visitationlog 
+        WHERE uid = :uid and rid = :rid and timestamp = CURRENT_DATE
+      '''
+      cursor = g.conn.execute(text(query), uid=uid, rid=rid)
+      for result in cursor:
+        return
 
       query = '''
-        IF NOT EXISTS (
-          SELECT uid, rid, timestamp
-          FROM visitationlog
-          WHERE rid = :rid AND uid = :uid AND timestamp = CURRENT_DATE
-        )
-        BEGIN 
           INSERT INTO visitationlog(uid, rid, timestamp) VALUES 
             (:uid, :rid, CURRENT_DATE)
-        END;
       '''
       cursor = g.conn.execute(text(query), uid=uid, rid=rid)
       cursor.close()
@@ -527,17 +530,34 @@ def view_restaurant_details():
   return restaurants(uid = uid, rid = rid, location=location, average_rating = average_rating, menu_details = menu_details, ratings=ratings, comments = comments)
 
 
-@app.route('/add_rating')
+@app.route('/add_rating', methods=["POST"])
 def add_rating():
   review_text = request.form["new_review"]
   stars = request.form["stars"]
+  uid = request.form["uid"]
+  rid = request.form["rid"]
 
   query = '''
     INSERT INTO rating(uid, rid, stars, review) VALUES 
       (:uid, :rid, :stars, :review_text)
   '''
+  cursor = g.conn.execute(text(query), rid = rid, uid = uid, stars = stars, review_text = review_text)  
 
-  return
+  return restaurants(uid = uid)
+
+@app.route('/add_comment', methods=["POST"])
+def add_comment():
+  comment_body = request.form["new_comment"]
+  uid = request.form["uid"]
+  rating_id = request.form["rating_id"]
+
+  query = '''
+    INSERT INTO ratingcomment(commenter_uid, rating_id, comment_body) VALUES 
+      (:uid, :rating_id, :comment_body)
+  '''
+  cursor = g.conn.execute(text(query), rating_id = rating_id, uid = uid, comment_body = comment_body)  
+
+  return restaurants(uid = uid)
 
 if __name__ == "__main__":
     import click
