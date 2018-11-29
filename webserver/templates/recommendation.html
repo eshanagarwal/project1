@@ -25,45 +25,45 @@
 
   <p>Generate a recommendation, choose one of the following</p>
 
-  Cuisine Type:
-  <select name="item_style">
-    <option disabled selected value> -- select an option -- </option>
-    <option value="Healthy">Healthy</option>
-    <option value="Fish">Seafood</option>
-    <option value="American">American</option>
-    <option value="Italian">Italian</option>
-  </select>
-  <br />
-
-  Distance (max number of blocks radius):
-  <select name="block_distance">
-    <option disabled selected value> -- select an option -- </option>
-    <option value="2">2</option>
-    <option value="4">4</option>
-    <option value="6">6</option>
-    <option value="8">8</option>
-    <option value="10">10</option>
-    <option value="999">Any</option>
-  </select>
-  <br />
-
-  Max Price:
-  <select name="relative_cost">
-    <option disabled selected value> -- select an option -- </option>
-    <option value="1">Low</option>
-    <option value="2">Medium</option>
-    <option value="5">Any price</option>
-  </select>
-  <br />
-  <br />
-  <input type="hidden" name="uid" value="{{uid}}"/>
   <form action="/recommend" method="POST">
+    Cuisine Type:
+    <select name="item_style">
+      <option disabled selected value> -- select an option -- </option>
+      <option value="Healthy">Healthy</option>
+      <option value="Fish">Seafood</option>
+      <option value="American">American</option>
+      <option value="Italian">Italian</option>
+    </select>
+    <br />
+
+    Distance (max number of blocks radius):
+    <select name="block_distance">
+      <option disabled selected value> -- select an option -- </option>
+      <option value="2">2</option>
+      <option value="4">4</option>
+      <option value="6">6</option>
+      <option value="8">8</option>
+      <option value="10">10</option>
+      <option value="999">Any</option>
+    </select>
+    <br />
+
+    Max Price:
+    <select name="relative_cost">
+      <option disabled selected value> -- select an option -- </option>
+      <option value="1">Low</option>
+      <option value="2">Medium</option>
+      <option value="5">Any price</option>
+    </select>
+    <br />
+    <br />
+    <input type="hidden" name="uid" value="{{uid}}"/>
     <input type="submit" value="Submit">
   </form>
 
   {% if recommendations|length > 0 %}
-  {% for name in recommendations %}
-      <p> Recommended restaurant: {{recname}}</p>
+  {% for rid, name in recommendations %}
+      <p> Recommended restaurant: {{name}}</p>
   {% endfor %}
   {% endif %}
 

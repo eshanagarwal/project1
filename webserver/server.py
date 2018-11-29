@@ -11,6 +11,7 @@ Read about it online.
 """
 
 import os
+import random
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
@@ -292,7 +293,6 @@ def add_friend():
     friend_uid = -1
     if cursor.rowcount == 0:
         # user does not exist
-        print("user does not exist")
         return home(uid)
     else:
         for result in cursor:
@@ -330,21 +330,30 @@ def add_friend():
 
 @app.route('/recommendation', methods=['GET'])
 def recommendation():
+    if 'uid' in request.args:
+      uid = request.args['uid']
+    else:
+      return index()
 
-    return render_template("recommendation.html")
+    context = dict(
+      uid = uid
+    )
+    return render_template("recommendation.html", **context)
 
 
 @app.route('/recommend', methods=['GET', 'POST'])
 def recommend(rid = -1, name = ''):
 
     uid = request.form['uid']
+    print(uid)
     item_style = request.form['item_style']
     block_distance = request.form['block_distance']
     relative_cost = request.form['relative_cost']
 
     query = '''
     SELECT DISTINCT restaurant.name as name, restaurant.rid as rid
-    FROM restaurant INNER JOIN restaurantmenuitempair on restaurant.rid = restaurantmenuitempair.rid
+    FROM restaurant 
+    INNER JOIN restaurantmenuitempair on restaurant.rid = restaurantmenuitempair.rid
     INNER JOIN  menuitem on restaurantmenuitempair.item_type = menuitem.item_type
     WHERE item_style = :item_style
     INTERSECT
@@ -356,21 +365,23 @@ def recommend(rid = -1, name = ''):
     SELECT DISTINCT restaurant.name as name, restaurant.rid as rid
     FROM restaurant
     WHERE relative_cost <= :relative_cost
+    LIMIT 1
     '''
 
     cursor = g.conn.execute(text(query), item_style=item_style, block_distance=block_distance,
                             relative_cost=relative_cost, uid=uid)
     recommendations = []
     for result in cursor:
-        recommendations.append(result['rid'])
+        recommendations.append((result['rid'], result['name']))
 
     cursor.close()
-
+    
     query = '''
-    SELECT rid as rid
-    FROM visitationlog
-    WHERE uid = :uid
-    LIMIT 2'''
+      SELECT rid as rid
+      FROM visitationlog
+      WHERE uid = :uid
+      LIMIT 2
+    '''
 
     cursor = g.conn.execute(text(query), uid=uid)
     visits = []
@@ -379,30 +390,17 @@ def recommend(rid = -1, name = ''):
 
     cursor.close()
 
+
+
     rec = -1
     for i in visits:
         for j in recommendations:
             if i == j & (len(recommendations) > 1):
                 recommendations.remove(j)
 
-    import random
-    rec = random.sample(recommendations, 1)
-
-    recname = ''
-
-    query = """
-    SELECT name as recname
-    FROM restaurant
-    WHERE rid = :rec"""
-
-    cursor = g.conn.execute(text(query), rec=rec)
-    for result in cursor:
-        recname.append(result['recname'])
-    cursor.close()
-
     context = dict(
         uid=uid,
-        recname=recname
+        recommendations=recommendations
     )
     return render_template("recommendation.html", **context)
 
