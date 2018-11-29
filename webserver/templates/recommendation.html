@@ -4,6 +4,19 @@
       font-size: 15pt;
       font-family: arial;
     }
+    .submit_button {
+      width: 100px;
+      height: 30px;
+      border-radius: 25px;
+      background-color: #3498db;
+      border-color: #3498db;
+      color:white;
+      margin-top: 15px;
+    }
+    .submit_button:hover{
+      color:#000000;
+      background-color:#FFFFFF;
+    }
   </style>
 
 
@@ -22,7 +35,7 @@
   </select>
   <br />
 
-  Distance (number of block radius):
+  Distance (max number of blocks radius):
   <select name="block_distance">
     <option disabled selected value> -- select an option -- </option>
     <option value="2">2</option>
@@ -33,9 +46,28 @@
     <option value="999">Any</option>
   </select>
   <br />
-  <br />
 
-  Recommended restaurant:
+  Max Price:
+  <select name="relative_cost">
+    <option disabled selected value> -- select an option -- </option>
+    <option value="1">Low</option>
+    <option value="2">Medium</option>
+    <option value="5">Any price</option>
+  </select>
+  <br />
+  <br />
+  <input type="hidden" name="uid" value="{{uid}}"/>
+  <form action="/recommend" method="POST">
+    <input type="submit" value="Submit">
+  </form>
+
+  {% if recommendations|length > 0 %}
+  {% for name in recommendations %}
+      <p> Recommended restaurant: {{recname}}</p>
+  {% endfor %}
+  {% endif %}
+
+
 
 
 </body>
