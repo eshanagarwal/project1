@@ -101,7 +101,6 @@ def home(uid=-1):
     See its API: http://flask.pocoo.org/docs/0.10/api/#incoming-request-data
     """
 
-    print (request.args)
     if int(uid) < 0:
       return index()
 
@@ -363,7 +362,7 @@ def recommend(rid = -1, name = ''):
     item_style = request.form['item_style']
     block_distance = request.form['block_distance']
     relative_cost = request.form['relative_cost']
-    print(uid)
+    
     if item_style == '' or block_distance == '' or relative_cost == '':
       context = dict(
           uid=uid,
@@ -398,7 +397,7 @@ def recommend(rid = -1, name = ''):
 
     if len(recommendations) > 0:
       recommendations = random.sample(recommendations, 1)
-      print(recommendations)
+      
       rid = recommendations[0][0]
       check_query = '''
         SELECT 
