@@ -98,10 +98,16 @@
   {% if ratings|length > 0 %}
     <div class="panels" style="text-align:left; height:400px; overflow-y:scroll;">
       <h5> Ratings </h5>
-      {% for rating_id, stars, review in ratings %}
-        <p class="rating"> {{stars}}: {{review}}</p> <br />
-        {% for comment_body in comments[rating_id|int] %}
-          <p class="comment"> {{comment_body}} </p> <br />
+      {% for email, rating_id, stars, review in ratings %}
+        <div class="rating">
+          <p> {{stars}}: {{review}}</p> <br />
+          <p style="font-size: 10px; padding: 0px; margin:0px; margin-top: -30px; "> Written by {{email}} </p> <br />
+        </div>
+        {% for email, comment_body in comments[rating_id|int] %}
+          <div class="comment">
+            <p> {{comment_body}} </p> <br />
+            <p style="font-size: 10px; padding: 0px; margin:0px; margin-top: -30px; "> Written by {{email}} </p> <br />
+          </div>
         {% endfor %}
         <div class="comment">
           <form method="POST" action="/add_comment">

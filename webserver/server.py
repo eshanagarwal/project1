@@ -411,19 +411,21 @@ def view_restaurant_details():
   cursor.close()
 
   query_reviews = '''
-    SELECT *
+    SELECT *, studentuser.email as email
     FROM rating
+    INNER JOIN studentuser ON rating.uid = studentuser.uid
     WHERE rid = :rid
   '''
   cursor = g.conn.execute(text(query_reviews), rid = rid)  
   ratings = []
   for result in cursor:
-    ratings.append((result["rating_id"], result["stars"], result["review"]))
+    ratings.append((result["email"], result["rating_id"], result["stars"], result["review"]))
   cursor.close()
 
   query_comments = '''
-    SELECT *
+    SELECT *, studentuser.email as email
     FROM ratingcomment
+    INNER JOIN studentuser ON ratingcomment.commenter_uid = studentuser.uid
     WHERE rating_id IN (
       SELECT rating_id
       FROM rating
@@ -434,9 +436,9 @@ def view_restaurant_details():
   comments = {}
   for result in cursor:
     if result['rating_id'] in comments:
-      comments[result['rating_id']].append(result['comment_body'])
+      comments[result['rating_id']].append((result["email"], result['comment_body']))
     else:
-      comments[result['rating_id']] = [result['comment_body']]
+      comments[result['rating_id']] = [(result["email"], result['comment_body'])]
 
   cursor.close()
 
