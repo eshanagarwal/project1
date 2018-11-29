@@ -345,8 +345,71 @@ def recommend():
     g.conn.execute(text(query), item_style=item_style, block_distance=block_distance)
 
 @app.route('/restaurants')
-def restaurants():
-  return render_template("restaurants.html")
+def restaurants(location='', menu_details={}, ratings={}):
+  query = '''
+    SELECT DISTINCT restaurant.name as name
+    FROM restaurant 
+  '''
+
+  cursor = g.conn.execute(text(query))
+  restaurants = []
+  for result in cursor:
+      restaurants.append(result['name'])
+
+  cursor.close()
+
+  context = dict(
+    restaurants = restaurants,
+    location = location,
+    menu_details = menu_details,
+    ratings = ratings
+  )
+  return render_template("restaurants.html", **context)
+
+@app.route('/view_restaurant_details', methods=['POST'])
+def view_restaurant_details():
+  chosen_rest = request.form['chosen_restaurant']
+  query = '''
+    SELECT rid, location 
+    FROM restaurant 
+    WHERE name = :chosen_rest
+  '''
+
+  cursor = g.conn.execute(text(query), chosen_rest = chosen_rest)  
+  location = ''
+  rid = -1
+  for result in cursor:
+      location = result['location']
+      rid = result['rid']
+  cursor.close()
+
+  if rid < 0:
+    return restaurants()
+
+  query_menu = '''
+    SELECT item_type, price
+    FROM RestaurantMenuItemPair
+    WHERE rid = :rid
+  '''
+  cursor = g.conn.execute(text(query_menu), rid = rid)  
+  menu_details = []
+  for result in cursor:
+    menu_details.append((result["item_type"], result["price"]))
+
+  cursor.close()
+
+  query_reviews = '''
+    SELECT stars, review
+    FROM rating
+    WHERE rid = :rid
+  '''
+  cursor = g.conn.execute(text(query_reviews), rid = rid)  
+  ratings = []
+  for result in cursor:
+    ratings.append((result["stars"], result["review"]))
+  cursor.close()
+
+  return restaurants(location=location, menu_details = menu_details, ratings=ratings)
 
 if __name__ == "__main__":
     import click

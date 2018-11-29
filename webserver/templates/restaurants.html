@@ -10,6 +10,28 @@
 <body>
   <h3>Restaurants Directory</h3>
 
+  <form action="/view_restaurant_details" method="POST">
+    <select name="chosen_restaurant">
+      {% for restaurant in restaurants %}
+        <option value="{{restaurant}}">{{restaurant}}</option>
+      {% endfor %}
+    </select>
+    <input type="submit" value="Select">
+  </form>
+
+  {% if menu_details|length > 0 %}
+    <h5> Menu </h5>
+    {% for item_type, price in menu_details %}
+      <p> {{item_type}}: {{price}}</p>
+    {% endfor %}
+  {% endif %}
+
+  {% if ratings|length > 0 %}
+    <h5> Ratings </h5>
+    {% for stars, review in ratings %}
+      <p> {{stars}}: {{review}}</p>
+    {% endfor %}
+  {% endif %}
 
 </body>
 
