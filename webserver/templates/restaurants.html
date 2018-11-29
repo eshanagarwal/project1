@@ -16,11 +16,13 @@
         <option value="{{restaurant}}">{{restaurant}}</option>
       {% endfor %}
     </select>
+    <input type="hidden" name="uid" value="{{uid}}"/>
     <input type="submit" value="Select">
   </form>
 
   {% if location != '' %}
     <p> Located: {{location}} </p>
+    <p> Average Rating: {{average_rating}}
   {% endif %}
 
   {% if menu_details|length > 0 %}

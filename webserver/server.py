@@ -346,7 +346,7 @@ def recommend():
     g.conn.execute(text(query), item_style=item_style, block_distance=block_distance)
 
 @app.route('/restaurants', methods=['GET'])
-def restaurants(uid = -1, rid = -1, location='', menu_details=[], ratings=[], comments = {}):
+def restaurants(uid = -1, rid = -1, location='', average_rating = 0, menu_details=[], ratings=[], comments = {}):
   if 'uid' in request.args:
     uid = request.args['uid']
   elif uid < 0:
@@ -369,6 +369,7 @@ def restaurants(uid = -1, rid = -1, location='', menu_details=[], ratings=[], co
     rid = rid,
     restaurants = restaurants,
     location = location,
+    average_rating = average_rating,
     menu_details = menu_details,
     ratings = ratings,
     comments = comments
@@ -378,6 +379,8 @@ def restaurants(uid = -1, rid = -1, location='', menu_details=[], ratings=[], co
 @app.route('/view_restaurant_details', methods=['GET', 'POST'])
 def view_restaurant_details():
   chosen_rest = request.form['chosen_restaurant']
+  uid = request.form["uid"]
+
   query = '''
     SELECT rid, location 
     FROM restaurant 
@@ -437,7 +440,20 @@ def view_restaurant_details():
 
   cursor.close()
 
-  return restaurants(rid = rid, location=location, menu_details = menu_details, ratings=ratings, comments = comments)
+  average_rating = '''
+    SELECT AVG(stars) as avg
+    FROM rating
+    WHERE rid = :rid
+  '''
+  cursor = g.conn.execute(text(average_rating), rid = rid)  
+  average_rating = 0
+  for result in cursor:
+    average_rating = result["avg"]
+  cursor.close()  
+
+  average_rating = float("%0.2f" % average_rating)
+  
+  return restaurants(uid = uid, rid = rid, location=location, average_rating = average_rating, menu_details = menu_details, ratings=ratings, comments = comments)
 
 @app.route('/add_rating', methods=["POST"])
 def add_rating():
@@ -445,7 +461,6 @@ def add_rating():
   stars = request.form["stars"]
   uid = request.form["uid"]
   rid = request.form["rid"]
-  print(review_text, stars, uid, rid)
 
   query = '''
     INSERT INTO rating(uid, rid, stars, review) VALUES 
