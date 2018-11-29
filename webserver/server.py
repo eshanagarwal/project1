@@ -389,7 +389,7 @@ def recommend(rid = -1, name = ''):
         recommendations.append((result['rid'], result['name']))
 
     cursor.close()
-    
+    print(recommendations)
     query = '''
       SELECT rid as rid
       FROM visitationlog
@@ -403,13 +403,6 @@ def recommend(rid = -1, name = ''):
         visits.append(result['rid'])
 
     cursor.close()
-
-    rec = -1
-    for i in visits:
-        for j in recommendations:
-            if i == j & (len(recommendations) > 1):
-                recommendations.remove(j)
-
 
     if len(recommendations) > 0:
       rid = recommendations[0][0]
