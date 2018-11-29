@@ -101,18 +101,18 @@
       {% for email, rating_id, stars, review in ratings %}
         <div class="rating">
           <p> {{stars}}: {{review}}</p> <br />
-          <p style="font-size: 10px; padding: 0px; margin:0px; margin-top: -30px; "> Written by {{email}} </p> <br />
+          <p style="font-size: 10px; padding: 0px; margin:0px; margin-top: -35px; "> Written by {{email}} </p> <br />
         </div>
         {% for email, comment_body in comments[rating_id|int] %}
           <div class="comment">
             <p> {{comment_body}} </p> <br />
-            <p style="font-size: 10px; padding: 0px; margin:0px; margin-top: -30px; "> Written by {{email}} </p> <br />
+            <p style="font-size: 10px; padding: 0px; margin:0px; margin-top: -35px; "> Written by {{email}} </p> <br />
           </div>
         {% endfor %}
         <div class="comment">
           <form method="POST" action="/add_comment">
-            <input type="text" name="new_review" placeholder="Write a comment">
-            <input type="hidden" name="rid" value="{{rid}}"/>
+            <input type="text" name="new_comment" placeholder="Write a comment">
+            <input type="hidden" name="rating_id" value="{{rating_id}}"/>
             <input type="hidden" name="uid" value="{{uid}}"/>
             <input type="submit" value="Publish">
           </form>

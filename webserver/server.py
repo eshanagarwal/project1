@@ -472,6 +472,20 @@ def add_rating():
 
   return restaurants(uid = uid)
 
+@app.route('/add_comment', methods=["POST"])
+def add_comment():
+  comment_body = request.form["new_comment"]
+  uid = request.form["uid"]
+  rating_id = request.form["rating_id"]
+
+  query = '''
+    INSERT INTO ratingcomment(commenter_uid, rating_id, comment_body) VALUES 
+      (:uid, :rating_id, :comment_body)
+  '''
+  cursor = g.conn.execute(text(query), rating_id = rating_id, uid = uid, comment_body = comment_body)  
+
+  return restaurants(uid = uid)
+
 if __name__ == "__main__":
     import click
 
