@@ -363,7 +363,7 @@ def recommend(rid = -1, name = ''):
     item_style = request.form['item_style']
     block_distance = request.form['block_distance']
     relative_cost = request.form['relative_cost']
-
+    print(uid)
     if item_style == '' or block_distance == '' or relative_cost == '':
       context = dict(
           uid=uid,
@@ -380,7 +380,7 @@ def recommend(rid = -1, name = ''):
     INTERSECT
     SELECT DISTINCT restaurant.name as name, restaurant.rid as rid
     FROM restaurant INNER JOIN restaurantdistance on restaurant.rid = restaurantdistance.rid
-    INNER JOIN userlivesindorm on restaurantdistance.name = userlivesindorm.dorm_name
+    INNER JOIN studentuser on restaurantdistance.name = studentuser.dorm_name
     WHERE uid = :uid AND block_distance <= :block_distance
     INTERSECT
     SELECT DISTINCT restaurant.name as name, restaurant.rid as rid
@@ -394,7 +394,7 @@ def recommend(rid = -1, name = ''):
     recommendations = []
     for result in cursor:
         recommendations.append((result['rid'], result['name']))
-
+    print(recommendations)
     cursor.close()
 
     if len(recommendations) > 0:
