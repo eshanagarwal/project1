@@ -121,19 +121,34 @@ def home(uid=-1):
 
 def home_get_local_feed(uid):
     query = '''
-    SELECT 
-      visitationlog.uid as uid, 
-      visitationlog.rid as rid, 
-      visitationlog.timestamp as timestamp, 
-      studentuser.email as email, 
-      restaurant.name as restaurant_name
-    FROM visitationlog 
-    INNER JOIN studentuser ON visitationlog.uid = studentuser.uid
-    INNER JOIN restaurant ON visitationlog.rid = restaurant.rid
-    WHERE studentuser.uid = '{}';
-  '''.format(uid)
+      SELECT 
+        visitationlog.uid as uid, 
+        visitationlog.rid as rid, 
+        visitationlog.timestamp as timestamp, 
+        studentuser.email as email, 
+        restaurant.name as restaurant_name
+      FROM visitationlog 
+      INNER JOIN studentuser ON visitationlog.uid = studentuser.uid
+      INNER JOIN restaurant ON visitationlog.rid = restaurant.rid
+      WHERE studentuser.uid = :uid
+      UNION ALL
+      SELECT 
+        visitationlog.uid as uid, 
+        visitationlog.rid as rid, 
+        visitationlog.timestamp as timestamp, 
+        studentuser.email as email, 
+        restaurant.name as restaurant_name
+      FROM visitationlog
+      INNER JOIN studentuser ON visitationlog.uid = studentuser.uid
+      INNER JOIN restaurant ON visitationlog.rid = restaurant.rid
+      WHERE studentuser.uid in (
+        SELECT friendee
+        FROM friends
+        WHERE friender = :uid
+      );
+    '''
 
-    cursor = g.conn.execute(query)
+    cursor = g.conn.execute(text(query), uid=uid)
 
     feed_data = []
     for result in cursor:
