@@ -344,7 +344,9 @@ def recommend():
 
     g.conn.execute(text(query), item_style=item_style, block_distance=block_distance)
 
-
+@app.route('/restaurants')
+def restaurants():
+  return render_template("restaurants.html")
 
 if __name__ == "__main__":
     import click
