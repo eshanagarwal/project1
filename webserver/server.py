@@ -91,7 +91,7 @@ def index():
 
 
 @app.route('/home')
-def home(uid):
+def home(uid=-1):
     """
     request is a special object that Flask provides to access web request information:
     request.method:   "GET" or "POST"
@@ -100,8 +100,9 @@ def home(uid):
     See its API: http://flask.pocoo.org/docs/0.10/api/#incoming-request-data
     """
 
-    print
-    request.args
+    print request.args
+    if uid < 0:
+      return index()
 
     feed_data = home_get_local_feed(uid)
     friend_data = home_get_friends_data(uid)
@@ -344,8 +345,13 @@ def recommend():
 
     g.conn.execute(text(query), item_style=item_style, block_distance=block_distance)
 
-@app.route('/restaurants')
+@app.route('/restaurants', methods=['GET'])
 def restaurants(rid = -1, location='', menu_details=[], ratings=[], comments = {}):
+  if 'uid' in request.args:
+    uid = request.args['uid']
+  else: 
+    return index()
+
   query = '''
     SELECT DISTINCT restaurant.name as name
     FROM restaurant 
@@ -359,6 +365,7 @@ def restaurants(rid = -1, location='', menu_details=[], ratings=[], comments = {
   cursor.close()
 
   context = dict(
+    uid = uid,
     rid = rid,
     restaurants = restaurants,
     location = location,
@@ -368,7 +375,7 @@ def restaurants(rid = -1, location='', menu_details=[], ratings=[], comments = {
   )
   return render_template("restaurants.html", **context)
 
-@app.route('/view_restaurant_details', methods=['POST'])
+@app.route('/view_restaurant_details', methods=['GET', 'POST'])
 def view_restaurant_details():
   chosen_rest = request.form['chosen_restaurant']
   query = '''
@@ -436,7 +443,7 @@ def view_restaurant_details():
 def add_rating():
   review_text = request.form["new_review"]
   stars = request.form["stars"]
-  
+
   query = '''
     INSERT INTO rating(uid, rid, stars, review) VALUES 
       (:uid, :rid, :stars, :review_text)

@@ -10,7 +10,7 @@
 <body>
   <h3>Restaurants Directory</h3>
 
-  <form action="/view_restaurant_details" method="POST">
+  <form action="/view_restaurant_details?uid={{uid}}" method="POST">
     <select name="chosen_restaurant">
       {% for restaurant in restaurants %}
         <option value="{{restaurant}}">{{restaurant}}</option>
