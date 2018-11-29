@@ -122,19 +122,34 @@ def home(uid=-1):
 
 def home_get_local_feed(uid):
     query = '''
-    SELECT 
-      visitationlog.uid as uid, 
-      visitationlog.rid as rid, 
-      visitationlog.timestamp as timestamp, 
-      studentuser.email as email, 
-      restaurant.name as restaurant_name
-    FROM visitationlog 
-    INNER JOIN studentuser ON visitationlog.uid = studentuser.uid
-    INNER JOIN restaurant ON visitationlog.rid = restaurant.rid
-    WHERE studentuser.uid = '{}';
-  '''.format(uid)
+       SELECT 
+          visitationlog.uid as uid, 
+          visitationlog.rid as rid, 
+          visitationlog.timestamp as timestamp, 
+          studentuser.email as email, 
+          restaurant.name as restaurant_name
+        FROM visitationlog 
+        INNER JOIN studentuser ON visitationlog.uid = studentuser.uid
+        INNER JOIN restaurant ON visitationlog.rid = restaurant.rid
+        WHERE studentuser.uid = :uid
+        UNION ALL
+        SELECT 
+          visitationlog.uid as uid, 
+          visitationlog.rid as rid, 
+          visitationlog.timestamp as timestamp, 
+          studentuser.email as email, 
+          restaurant.name as restaurant_name
+        FROM visitationlog
+        INNER JOIN studentuser ON visitationlog.uid = studentuser.uid
+        INNER JOIN restaurant ON visitationlog.rid = restaurant.rid
+        WHERE studentuser.uid in (
+          SELECT friendee
+          FROM friends
+          WHERE friender = :uid
+        );
+    '''
 
-    cursor = g.conn.execute(query)
+    cursor = g.conn.execute(text(query), uid=uid)
 
     feed_data = []
     for result in cursor:
@@ -263,10 +278,10 @@ def send_invite():
 
     if invite_pair_present == True:
         query = '''
-      UPDATE invitation
-      SET timestamp = CURRENT_DATE
-      WHERE sender = :uid AND sendee = :friend;
-    '''
+          UPDATE invitation
+          SET timestamp = CURRENT_DATE
+          WHERE sender = :uid AND sendee = :friend;
+        '''
     else:
         query = '''
       INSERT INTO invitation(sender, sendee, timestamp) VALUES (:uid, :friend, CURRENT_DATE);
@@ -345,7 +360,6 @@ def recommendation():
 def recommend(rid = -1, name = ''):
 
     uid = request.form['uid']
-    print(uid)
     item_style = request.form['item_style']
     block_distance = request.form['block_distance']
     relative_cost = request.form['relative_cost']
@@ -390,13 +404,21 @@ def recommend(rid = -1, name = ''):
 
     cursor.close()
 
-
-
     rec = -1
     for i in visits:
         for j in recommendations:
             if i == j & (len(recommendations) > 1):
                 recommendations.remove(j)
+
+
+    if len(recommendations) > 0:
+      rid = recommendations[0][0]
+      query = '''
+        INSERT INTO visitationlog(uid, rid, timestamp) VALUES 
+          (:uid, :rid, CURRENT_DATE)
+      '''
+      cursor = g.conn.execute(text(query), uid=uid, rid=rid)
+      cursor.close()
 
     context = dict(
         uid=uid,
