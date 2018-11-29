@@ -1,64 +1,102 @@
 <html>
   <style>
-    body{
+    body{ 
       font-size: 15pt;
       font-family: arial;
+      background-color: #3498db;
+      text-align: center;
+    }
+    .panels {
+      display: inline-block;
+      width: 350px;
+      margin-right: 10px;
+      vertical-align: top;
+      background-color: white;
+      border-radius: 5px;
+      padding: 15px;
+    }
+    .nav_bar {
+      width: 100%; 
+      width: 100vw;
+      background-color: white; 
+      float: left; 
+      margin-left: -10px;
+      margin-top: -10px;
+      text-align: center;
     }
   </style>
 
 
 <body>
-  <h3>Restaurants Directory</h3>
+  <div class="nav_bar">
+    <h2 style="text-align:center; margin-bottom: -20px;">Columbia Meal Social: Restaurant Directory</h2>
+    <h4 style="text-align:center;">Plan Meals with Friends on Campus! </h4>
+  </div>
 
-  <form action="/view_restaurant_details?uid={{uid}}" method="POST">
-    <select name="chosen_restaurant">
-      {% for restaurant in restaurants %}
-        <option value="{{restaurant}}">{{restaurant}}</option>
-      {% endfor %}
-    </select>
-    <input type="hidden" name="uid" value="{{uid}}"/>
-    <input type="submit" value="Select">
-  </form>
+  <div> 
+    <form action="/view_restaurant_details" method="POST">
+      <select name="chosen_restaurant">
+        {% for restaurant in restaurants %}
+          <option value="{{restaurant}}">{{restaurant}}</option>
+        {% endfor %}
+      </select>
+      <input type="hidden" name="uid" value="{{uid}}"/>
+      <input type="submit" value="Select">
+    </form>
+  </div>
 
-  {% if location != '' %}
-    <p> Located: {{location}} </p>
-    <p> Average Rating: {{average_rating}}
-  {% endif %}
+  <div style="display: inline-block;">
+    {% if location != '' %}
+      <div class="panels" style="display:block;">
+        <p> <u>Located:</u> {{location}} </p>
+        <p> <u>Average Rating:</u> {{average_rating}}
+      </div>
+    {% endif %}
 
+    {% if rid != -1 %}
+      <div class="panels" style="display:block; margin-top: 15px;">
+        <form method="POST" action="/add_rating">
+          <p>
+            Write a review: <input type="text" name="new_review" placeholder="Review Text"> <br />
+            Stars: <select name="stars">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+            <input type="hidden" name="rid" value="{{rid}}"/>
+            <input type="hidden" name="uid" value="{{uid}}"/>
+            <input type="submit" value="Publish">
+          </p>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+
+  
   {% if menu_details|length > 0 %}
-    <h5> Menu </h5>
-    {% for item_type, price in menu_details %}
-      <p> {{item_type}}: {{price}}</p>
-    {% endfor %}
+      <div class="panels">
+        <h5> Menu </h5>
+        {% for item_type, price in menu_details %}
+          <p> {{item_type}}: ${{price}}</p>
+        {% endfor %}
+      </div>
   {% endif %}
+  
 
   {% if ratings|length > 0 %}
-    <h5> Ratings </h5>
-    {% for rating_id, stars, review in ratings %}
-      <p> {{stars}}: {{review}}</p>
-      {% for comment_body in comments[rating_id|int] %}
-        <p> {{comment_body}} </p>
+    <div class="panels">
+      <h5> Ratings </h5>
+      {% for rating_id, stars, review in ratings %}
+        <p> {{stars}}: {{review}}</p>
+        {% for comment_body in comments[rating_id|int] %}
+          <p> {{comment_body}} </p>
+        {% endfor %}
       {% endfor %}
-    {% endfor %}
+    </div>
   {% endif %}
 
-  {% if rid != -1 %}
-    <form method="POST" action="/add_rating">
-      <p>
-        Write a review: <input type="text" name="new_review" placeholder="Review Text">
-        Stars: <select name="stars">
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-        </select>
-        <input type="hidden" name="rid" value="{{rid}}"/>
-        <input type="hidden" name="uid" value="{{uid}}"/>
-        <input type="submit" value="Publish">
-      </p>
-    </form>
-  {% endif %}
 </body>
 
 </html>
