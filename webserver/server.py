@@ -372,21 +372,20 @@ def recommend(rid = -1, name = ''):
       return render_template("recommendation.html", **context)
 
     query = '''
-    SELECT DISTINCT restaurant.name as name, restaurant.rid as rid
-    FROM restaurant 
-    INNER JOIN restaurantmenuitempair on restaurant.rid = restaurantmenuitempair.rid
-    INNER JOIN  menuitem on restaurantmenuitempair.item_type = menuitem.item_type
-    WHERE item_style = :item_style
-    INTERSECT
-    SELECT DISTINCT restaurant.name as name, restaurant.rid as rid
-    FROM restaurant INNER JOIN restaurantdistance on restaurant.rid = restaurantdistance.rid
-    INNER JOIN studentuser on restaurantdistance.name = studentuser.dorm_name
-    WHERE uid = :uid AND block_distance <= :block_distance
-    INTERSECT
-    SELECT DISTINCT restaurant.name as name, restaurant.rid as rid
-    FROM restaurant
-    WHERE relative_cost <= :relative_cost
-    LIMIT 1
+      SELECT DISTINCT restaurant.name as name, restaurant.rid as rid
+      FROM restaurant 
+      INNER JOIN restaurantmenuitempair on restaurant.rid = restaurantmenuitempair.rid
+      INNER JOIN  menuitem on restaurantmenuitempair.item_type = menuitem.item_type
+      WHERE item_style = :item_style
+      INTERSECT
+      SELECT DISTINCT restaurant.name as name, restaurant.rid as rid
+      FROM restaurant INNER JOIN restaurantdistance on restaurant.rid = restaurantdistance.rid
+      INNER JOIN studentuser on restaurantdistance.name = studentuser.dorm_name
+      WHERE uid = :uid AND block_distance <= :block_distance
+      INTERSECT
+      SELECT DISTINCT restaurant.name as name, restaurant.rid as rid
+      FROM restaurant
+      WHERE relative_cost <= :relative_cost
     '''
 
     cursor = g.conn.execute(text(query), item_style=item_style, block_distance=block_distance,
@@ -394,10 +393,12 @@ def recommend(rid = -1, name = ''):
     recommendations = []
     for result in cursor:
         recommendations.append((result['rid'], result['name']))
-    print(recommendations)
+    
     cursor.close()
 
     if len(recommendations) > 0:
+      recommendations = random.sample(recommendations, 1)
+      print(recommendations)
       rid = recommendations[0][0]
       check_query = '''
         SELECT 
@@ -550,11 +551,12 @@ def add_rating():
   uid = request.form["uid"]
   rid = request.form["rid"]
 
-  query = '''
-    INSERT INTO rating(uid, rid, stars, review) VALUES 
-      (:uid, :rid, :stars, :review_text)
-  '''
-  cursor = g.conn.execute(text(query), rid = rid, uid = uid, stars = stars, review_text = review_text)  
+  if review_text != '':
+    query = '''
+      INSERT INTO rating(uid, rid, stars, review) VALUES 
+        (:uid, :rid, :stars, :review_text)
+    '''
+    cursor = g.conn.execute(text(query), rid = rid, uid = uid, stars = stars, review_text = review_text)  
 
   return restaurants(uid = uid)
 
@@ -564,11 +566,12 @@ def add_comment():
   uid = request.form["uid"]
   rating_id = request.form["rating_id"]
 
-  query = '''
-    INSERT INTO ratingcomment(commenter_uid, rating_id, comment_body) VALUES 
-      (:uid, :rating_id, :comment_body)
-  '''
-  cursor = g.conn.execute(text(query), rating_id = rating_id, uid = uid, comment_body = comment_body)  
+  if comment_body != '':
+    query = '''
+      INSERT INTO ratingcomment(commenter_uid, rating_id, comment_body) VALUES 
+        (:uid, :rating_id, :comment_body)
+    '''
+    cursor = g.conn.execute(text(query), rating_id = rating_id, uid = uid, comment_body = comment_body)  
 
   return restaurants(uid = uid)
 
